@@ -1,18 +1,19 @@
-# NDEF Library for Arduino
+# NDEF Library for Arduino/Particle
 
 Read and Write NDEF messages on Mifare Ultralight NFC Tags with Arduino connected to MFRC522 RFID card.
 
 NFC Data Exchange Format (NDEF) is a common data format that operates across all NFC devices, regardless of the underlying tag or device technology.
 
-Originally forked from NDEF library that exclusively worked with NFC Shield, but adapted to work with the [MFRC522 Arduino](https://github.com/miguelbalboa/rfid) and [MFRC522 Particle](https://github.com/pkourany/MFRC522_RFID_Library).
+Originally forked from NDEF library that exclusively worked with NFC Shield, but adapted to work with the [MFRC522 Arduino](https://github.com/miguelbalboa/rfid) and [MFRC522 Particle](https://github.com/pkourany/MFRC522_RFID_Library) and limited to Mifare Ultralight NFC tags.
 
-### Supports 
- - Reading from Mifare Ultralight tags.
- - Writing to Mifare Ultralight tags.
+### Supports
+
+- Reading from Mifare Ultralight tags.
+- Writing to Mifare Ultralight tags.
 
 ### Requires
 
-* [MFRC522 Arduino](https://github.com/miguelbalboa/rfid) or [MFRC522 Particle](https://github.com/pkourany/MFRC522_RFID_Library)
+- [MFRC522 Arduino](https://github.com/miguelbalboa/rfid) or [MFRC522 Particle](https://github.com/pkourany/MFRC522_RFID_Library)
 
 ## Hello Github
 
@@ -73,10 +74,9 @@ Clean a tag. Cleaning resets a tag back to a factory-like state. For Mifare Clas
     MifareUltralight writer = MifareUltralight(mfrc522);
     bool success = writer.clean();
 
+### NfcTag
 
-### NfcTag 
-
-Reading a tag with the shield, returns a NfcTag object. The NfcTag object contains meta data about the tag UID, technology, size.  When an NDEF tag is read, the NfcTag object contains a NdefMessage.
+Reading a tag with the shield, returns a NfcTag object. The NfcTag object contains meta data about the tag UID, technology, size. When an NDEF tag is read, the NfcTag object contains a NdefMessage.
 
 ### NdefMessage
 
@@ -100,14 +100,15 @@ This code is based on the "NFC Data Exchange Format (NDEF) Technical Specificati
 ### Tests
 
 TBD
-    
+
 ## Known Issues
 
 This software is in development. It works for the happy path. Error handling could use improvement. It runs out of memory, especially on the Uno board. Use small messages with the Uno. The Due board can write larger messages. Please submit patches.
 
-* Read and Write in the same session fails 
+- Read and Write in the same session fails
 
 ## Book
+
 Need more info? Check out my book <a href="http://www.anrdoezrs.net/click-7521423-11260198-1430755877000?url=http%3A%2F%2Fshop.oreilly.com%2Fproduct%2F0636920021193.do%3Fcmp%3Daf-prog-books-videos-product_cj_9781449372064_%2525zp&cjsku=0636920021193" target="_top">
 Beginning NFC: Near Field Communication with Arduino, Android, and PhoneGap</a><img src="http://www.lduhtrp.net/image-7521423-11260198-1430755877000" width="1" height="1" border="0"/>.
 
