@@ -1,20 +1,20 @@
 #ifndef MifareUltralight_h
 #define MifareUltralight_h
 
-#include <PN532.h>
-#include <NfcTag.h>
-#include <Ndef.h>
+#include <MFRC522.h>
+#include "NfcTag.h"
+#include "Ndef.h"
 
 class MifareUltralight
 {
     public:
-        MifareUltralight(PN532& nfcShield);
+        MifareUltralight(MFRC522& nfcShield);
         ~MifareUltralight();
-        NfcTag read(byte *uid, unsigned int uidLength);
-        boolean write(NdefMessage& ndefMessage, byte *uid, unsigned int uidLength);
+        NfcTag read();
+        boolean write(NdefMessage& ndefMessage);
         boolean clean();
     private:
-        PN532* nfc;
+        MFRC522* nfc;
         unsigned int tagCapacity;
         unsigned int messageLength;
         unsigned int bufferSize;

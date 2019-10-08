@@ -1,4 +1,4 @@
-#include <MifareUltralight.h>
+#include "MifareUltralight.h"
 
 #define ULTRALIGHT_PAGE_SIZE 4
 #define ULTRALIGHT_READ_SIZE 4 // we should be able to read 16 bytes at a time
@@ -10,7 +10,27 @@
 
 #define NFC_FORUM_TAG_TYPE_2 ("NFC Forum Type 2")
 
-MifareUltralight::MifareUltralight(PN532& nfcShield)
+/**
+ * 
+ * From: https://github.com/miguelbalboa/rfid/blob/master/src/MFRC522.h
+ *  * MIFARE Ultralight (MF0ICU1):
+ * 		Has 16 pages of 4 bytes = 64 bytes.
+ * 		Pages 0 + 1 is used for the 7-byte UID.
+ * 		Page 2 contains the last check digit for the UID, one byte manufacturer internal data, and the lock bytes (see http://www.nxp.com/documents/data_sheet/MF0ICU1.pdf section 8.5.2)
+ * 		Page 3 is OTP, One Time Programmable bits. Once set to 1 they cannot revert to 0.
+ * 		Pages 4-15 are read/write unless blocked by the lock bytes in page 2. 
+ * MIFARE Ultralight C (MF0ICU2):
+ * 		Has 48 pages of 4 bytes = 192 bytes.
+ * 		Pages 0 + 1 is used for the 7-byte UID.
+ * 		Page 2 contains the last check digit for the UID, one byte manufacturer internal data, and the lock bytes (see http://www.nxp.com/documents/data_sheet/MF0ICU1.pdf section 8.5.2)
+ * 		Page 3 is OTP, One Time Programmable bits. Once set to 1 they cannot revert to 0.
+ * 		Pages 4-39 are read/write unless blocked by the lock bytes in page 2. 
+ * 		Page 40 Lock bytes
+ * 		Page 41 16 bit one way counter
+ * 		Pages 42-43 Authentication configuration
+ * 		Pages 44-47 Authentication key 
+ */
+MifareUltralight::MifareUltralight(MFRC522 &nfcShield)
 {
     nfc = &nfcShield;
     ndefStartIndex = 0;
@@ -21,8 +41,11 @@ MifareUltralight::~MifareUltralight()
 {
 }
 
-NfcTag MifareUltralight::read(byte * uid, unsigned int uidLength)
+NfcTag MifareUltralight::read()
 {
+    unsigned int uidLength = 7;
+    byte *uid = nfc->uid.uidByte;
+
     if (isUnformatted())
     {
 #ifdef NDEF_USE_SERIAL
@@ -35,7 +58,8 @@ NfcTag MifareUltralight::read(byte * uid, unsigned int uidLength)
     findNdefMessage();
     calculateBufferSize();
 
-    if (messageLength == 0) { // data is 0x44 0x03 0x00 0xFE
+    if (messageLength == 0)
+    { // data is 0x44 0x03 0x00 0xFE
         NdefMessage message = NdefMessage();
         message.addEmptyRecord();
         return NfcTag(uid, uidLength, NFC_FORUM_TAG_TYPE_2, message);
@@ -48,18 +72,21 @@ NfcTag MifareUltralight::read(byte * uid, unsigned int uidLength)
     for (page = ULTRALIGHT_DATA_START_PAGE; page < ULTRALIGHT_MAX_PAGE; page++)
     {
         // read the data
-        success = nfc->mifareultralight_ReadPage(page, &buffer[index]);
+        success = nfc->MIFARE_Read(page, &buffer[index], ULTRALIGHT_READ_SIZE);
         if (success)
         {
-            #ifdef MIFARE_ULTRALIGHT_DEBUG
-            Serial.print(F("Page "));Serial.print(page);Serial.print(" ");
+#ifdef MIFARE_ULTRALIGHT_DEBUG
+            Serial.print(F("Page "));
+            Serial.print(page);
+            Serial.print(" ");
             nfc->PrintHexChar(&buffer[index], ULTRALIGHT_PAGE_SIZE);
-            #endif
+#endif
         }
         else
         {
 #ifdef NDEF_USE_SERIAL
-            Serial.print(F("Read failed "));Serial.println(page);
+            Serial.print(F("Read failed "));
+            Serial.println(page);
 #endif
             // TODO error handling
             messageLength = 0;
@@ -76,14 +103,13 @@ NfcTag MifareUltralight::read(byte * uid, unsigned int uidLength)
 
     NdefMessage ndefMessage = NdefMessage(&buffer[ndefStartIndex], messageLength);
     return NfcTag(uid, uidLength, NFC_FORUM_TAG_TYPE_2, ndefMessage);
-
 }
 
 boolean MifareUltralight::isUnformatted()
 {
     uint8_t page = 4;
     byte data[ULTRALIGHT_READ_SIZE];
-    boolean success = nfc->mifareultralight_ReadPage (page, data);
+    boolean success = nfc->MIFARE_Read(page, data, ULTRALIGHT_READ_SIZE);
     if (success)
     {
         return (data[0] == 0xFF && data[1] == 0xFF && data[2] == 0xFF && data[3] == 0xFF);
@@ -91,7 +117,8 @@ boolean MifareUltralight::isUnformatted()
     else
     {
 #ifdef NDEF_USE_SERIAL
-        Serial.print(F("Error. Failed read page "));Serial.println(page);
+        Serial.print(F("Error. Failed read page "));
+        Serial.println(page);
 #endif
         return false;
     }
@@ -101,14 +128,16 @@ boolean MifareUltralight::isUnformatted()
 void MifareUltralight::readCapabilityContainer()
 {
     byte data[ULTRALIGHT_PAGE_SIZE];
-    int success = nfc->mifareultralight_ReadPage (3, data);
+    int success = nfc->MIFARE_Read(3, data, ULTRALIGHT_READ_SIZE);
     if (success)
     {
         // See AN1303 - different rules for Mifare Family byte2 = (additional data + 48)/8
         tagCapacity = data[2] * 8;
-        #ifdef MIFARE_ULTRALIGHT_DEBUG
-        Serial.print(F("Tag capacity "));Serial.print(tagCapacity);Serial.println(F(" bytes"));
-        #endif
+#ifdef MIFARE_ULTRALIGHT_DEBUG
+        Serial.print(F("Tag capacity "));
+        Serial.print(tagCapacity);
+        Serial.println(F(" bytes"));
+#endif
 
         // TODO future versions should get lock information
     }
@@ -119,17 +148,19 @@ void MifareUltralight::findNdefMessage()
 {
     int page;
     byte data[12]; // 3 pages
-    byte* data_ptr = &data[0];
+    byte *data_ptr = &data[0];
 
     // the nxp read command reads 4 pages, unfortunately adafruit give me one page at a time
     boolean success = true;
     for (page = 4; page < 6; page++)
     {
-        success = success && nfc->mifareultralight_ReadPage(page, data_ptr);
-        #ifdef MIFARE_ULTRALIGHT_DEBUG
-        Serial.print(F("Page "));Serial.print(page);Serial.print(F(" - "));
+        success = success && nfc->MFRC522::MIFARE_Read(page, data_ptr, ULTRALIGHT_READ_SIZE);
+#ifdef MIFARE_ULTRALIGHT_DEBUG
+        Serial.print(F("Page "));
+        Serial.print(page);
+        Serial.print(F(" - "));
         nfc->PrintHexChar(data_ptr, 4);
-        #endif
+#endif
         data_ptr += ULTRALIGHT_PAGE_SIZE;
     }
 
@@ -148,10 +179,12 @@ void MifareUltralight::findNdefMessage()
         }
     }
 
-    #ifdef MIFARE_ULTRALIGHT_DEBUG
-    Serial.print(F("messageLength "));Serial.println(messageLength);
-    Serial.print(F("ndefStartIndex "));Serial.println(ndefStartIndex);
-    #endif
+#ifdef MIFARE_ULTRALIGHT_DEBUG
+    Serial.print(F("messageLength "));
+    Serial.println(messageLength);
+    Serial.print(F("ndefStartIndex "));
+    Serial.println(ndefStartIndex);
+#endif
 }
 
 // buffer is larger than the message, need to handle some data before and after
@@ -168,8 +201,9 @@ void MifareUltralight::calculateBufferSize()
     }
 }
 
-boolean MifareUltralight::write(NdefMessage& m, byte * uid, unsigned int uidLength)
+boolean MifareUltralight::write(NdefMessage &m)
 {
+    Serial.println(F("Writing message"));
     if (isUnformatted())
     {
 #ifdef NDEF_USE_SERIAL
@@ -179,19 +213,19 @@ boolean MifareUltralight::write(NdefMessage& m, byte * uid, unsigned int uidLeng
     }
     readCapabilityContainer(); // meta info for tag
 
-    messageLength  = m.getEncodedSize();
+    messageLength = m.getEncodedSize();
     ndefStartIndex = messageLength < 0xFF ? 2 : 4;
     calculateBufferSize();
 
-    if(bufferSize>tagCapacity) {
-	    #ifdef MIFARE_ULTRALIGHT_DEBUG
-    	Serial.print(F("Encoded Message length exceeded tag Capacity "));Serial.println(tagCapacity);
-    	#endif
-    	return false;
+    if (bufferSize > tagCapacity)
+    {
+        Serial.print(F("Encoded Message length exceeded tag Capacity "));
+        Serial.println(tagCapacity);
+        return false;
     }
 
     uint8_t encoded[bufferSize];
-    uint8_t *  src = encoded;
+    uint8_t *src = encoded;
     unsigned int position = 0;
     uint8_t page = ULTRALIGHT_DATA_START_PAGE;
 
@@ -209,28 +243,39 @@ boolean MifareUltralight::write(NdefMessage& m, byte * uid, unsigned int uidLeng
         encoded[3] = (messageLength & 0xFF);
     }
 
-    m.encode(encoded+ndefStartIndex);
+    m.encode(encoded + ndefStartIndex);
     // this is always at least 1 byte copy because of terminator.
-    memset(encoded+ndefStartIndex+messageLength,0,bufferSize-ndefStartIndex-messageLength);
-    encoded[ndefStartIndex+messageLength] = 0xFE; // terminator
+    memset(encoded + ndefStartIndex + messageLength, 0, bufferSize - ndefStartIndex - messageLength);
+    encoded[ndefStartIndex + messageLength] = 0xFE; // terminator
 
-    #ifdef MIFARE_ULTRALIGHT_DEBUG
-    Serial.print(F("messageLength "));Serial.println(messageLength);
-    Serial.print(F("Tag Capacity "));Serial.println(tagCapacity);
-    nfc->PrintHex(encoded,bufferSize);
-    #endif
+    Serial.print(F("messageLength "));
+    Serial.println(messageLength);
+    Serial.print(F("Tag Capacity "));
+    Serial.println(tagCapacity);
+    Serial.print(F("bufferSize "));
+    Serial.println(bufferSize);
+    Serial.print(F("position "));
+    Serial.println(position);
 
-    while (position < bufferSize){ //bufferSize is always times pagesize so no "last chunk" check
+    while (position < bufferSize)
+    { //bufferSize is always times pagesize so no "last chunk" check
         // write page
-        if (!nfc->mifareultralight_WritePage(page, src))
+        //	StatusCode MIFARE_Ultralight_Write(byte page, byte *buffer, byte bufferSize);
+        MFRC522::StatusCode writeStatus = nfc->MIFARE_Ultralight_Write(page, src, ULTRALIGHT_PAGE_SIZE);
+        Serial.print(F("Write Status: "));
+        Serial.println(writeStatus);
+        if (writeStatus != MFRC522::StatusCode::STATUS_OK)
+        {
+            Serial.print(F("Failed to write page "));
+            Serial.println(page);
             return false;
-		#ifdef MIFARE_ULTRALIGHT_DEBUG
-        Serial.print(F("Wrote page "));Serial.print(page);Serial.print(F(" - "));
-    	nfc->PrintHex(src,ULTRALIGHT_PAGE_SIZE);
-    	#endif
+        }
+        Serial.print(F("Wrote page "));
+        Serial.print(page);
+        Serial.print(F(" - "));
         page++;
-        src+=ULTRALIGHT_PAGE_SIZE;
-        position+=ULTRALIGHT_PAGE_SIZE;
+        src += ULTRALIGHT_PAGE_SIZE;
+        position += ULTRALIGHT_PAGE_SIZE;
     }
     return true;
 }
@@ -244,14 +289,18 @@ boolean MifareUltralight::clean()
     uint8_t pages = (tagCapacity / ULTRALIGHT_PAGE_SIZE) + ULTRALIGHT_DATA_START_PAGE;
 
     // factory tags have 0xFF, but OTP-CC blocks have already been set so we use 0x00
-    uint8_t data[4] = { 0x00, 0x00, 0x00, 0x00 };
+    uint8_t data[4] = {0x00, 0x00, 0x00, 0x00};
 
-    for (int i = ULTRALIGHT_DATA_START_PAGE; i < pages; i++) {
-        #ifdef MIFARE_ULTRALIGHT_DEBUG
-        Serial.print(F("Wrote page "));Serial.print(i);Serial.print(F(" - "));
+    for (int i = ULTRALIGHT_DATA_START_PAGE; i < pages; i++)
+    {
+#ifdef MIFARE_ULTRALIGHT_DEBUG
+        Serial.print(F("Wrote page "));
+        Serial.print(i);
+        Serial.print(F(" - "));
         nfc->PrintHex(data, ULTRALIGHT_PAGE_SIZE);
-        #endif
-        if (!nfc->mifareultralight_WritePage(i, data)) {
+#endif
+        if (!nfc->MIFARE_Ultralight_Write(i, data, ULTRALIGHT_PAGE_SIZE))
+        {
             return false;
         }
     }
