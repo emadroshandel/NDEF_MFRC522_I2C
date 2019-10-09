@@ -2,7 +2,7 @@
 #include <NfcTag.h>
 #include <Wire.h>
 
-void setup() { Serial.begin(9600); }
+void setup() { Serial.begin(115200); }
 
 // Test for pull requests #14 and #16
 test(getUid) {

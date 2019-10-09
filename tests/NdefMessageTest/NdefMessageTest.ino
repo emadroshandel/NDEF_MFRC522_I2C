@@ -20,7 +20,7 @@ void assertBytesEqual(const uint8_t *expected, const uint8_t *actual,
   }
 }
 
-void setup() { Serial.begin(9600); }
+void setup() { Serial.begin(115200); }
 
 test(messageDelete) {
   int start = freeMemory();
