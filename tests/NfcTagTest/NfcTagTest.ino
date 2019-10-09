@@ -1,17 +1,13 @@
-#include <Wire.h>
-#include <PN532.h>
-#include <NfcTag.h>
 #include <ArduinoUnit.h>
+#include <NfcTag.h>
+#include <Wire.h>
 
-void setup() {
-    Serial.begin(9600);
-}
+void setup() { Serial.begin(9600); }
 
 // Test for pull requests #14 and #16
-test(getUid)
-{
-  byte uid[4] = { 0x00, 0xFF, 0xAA, 0x17 };
-  byte uidFromTag[sizeof(uid)]; 
+test(getUid) {
+  byte uid[4] = {0x00, 0xFF, 0xAA, 0x17};
+  byte uidFromTag[sizeof(uid)];
 
   NfcTag tag = NfcTag(uid, sizeof(uid));
 
@@ -31,7 +27,4 @@ test(getUid)
   assertEqual(0x17, uid[3]);
 }
 
-void loop() {
-  Test::run();
-}
-
+void loop() { Test::run(); }

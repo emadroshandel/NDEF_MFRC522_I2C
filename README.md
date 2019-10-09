@@ -69,7 +69,7 @@ Write a message to a tag
     MifareUltralight writer = MifareUltralight(mfrc522);
     bool success = writer.write(message);
 
-Clean a tag. Cleaning resets a tag back to a factory-like state. For Mifare Classic, tag is zeroed and reformatted as Mifare Classic (non-NDEF). For Mifare Ultralight, the tag is zeroed and left empty.
+Clean a tag. Cleaning resets a tag back to a factory-like state. For Mifare Ultralight, the tag is zeroed and left empty.
 
     MifareUltralight writer = MifareUltralight(mfrc522);
     bool success = writer.clean();
