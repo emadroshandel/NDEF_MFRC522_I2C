@@ -1,35 +1,32 @@
 
-#if 0
+#include "MifareUltralight.h"
+#include <MFRC522.h>
 #include <SPI.h>
-#include <PN532_SPI.h>
-#include <PN532.h>
-#include <NfcAdapter.h>
 
-PN532_SPI pn532spi(SPI, 10);
-NfcAdapter nfc = NfcAdapter(pn532spi);
-#else
+#define SS_PIN 10
+#define RST_PIN 6
+MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
-#include <Wire.h>
-#include <PN532_I2C.h>
-#include <PN532.h>
-#include <NfcAdapter.h>
-
-PN532_I2C pn532_i2c(Wire);
-NfcAdapter nfc = NfcAdapter(pn532_i2c);
-#endif
-
-void setup(void) {
-    Serial.begin(9600);
-    Serial.println("NDEF Reader");
-    nfc.begin();
+void setup() {
+  Serial.begin(115200); // Initialize serial communications with the PC
+  SPI.begin();          // Init SPI bus
+  mfrc522.PCD_Init();   // Init MFRC522 card
+  Serial.println(
+      F("Hold a tag with NDEF record to the MFRC522. Read the output."));
 }
 
-void loop(void) {
-    Serial.println("\nScan a NFC tag\n");
-    if (nfc.tagPresent())
-    {
-        NfcTag tag = nfc.read();
-        tag.print();
-    }
-    delay(5000);
+void loop() {
+  // Look for new cards
+  if (!mfrc522.PICC_IsNewCardPresent())
+    return;
+
+  // Select one of the cards
+  if (!mfrc522.PICC_ReadCardSerial())
+    return;
+
+  MifareUltralight reader = MifareUltralight(mfrc522);
+  NfcTag tag = reader.read();
+  tag.print();
+
+  delay(5000); // avoids duplicate scans
 }

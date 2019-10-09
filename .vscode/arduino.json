@@ -1,5 +1,4 @@
 {
-    "board": "arduino:avr:uno",
-    "port": "/dev/cu.usbmodem141101",
-    "sketch": "tests/NdefMessageTest/NdefMessageTest.ino"
+  "output": "./build",
+  "board": "arduino:avr:uno"
 }

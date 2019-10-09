@@ -17,7 +17,8 @@ Originally forked from NDEF library that exclusively worked with NFC Shield, but
 
 ## Hello Github
 
-This will write this Github URL to your tag which will allow your NFC-Enabled phone to read the URL.
+This will write this Github URL to your tag which will allow your NFC-Enabled phone to read the URL and open a browser to this page.
+See [WriteTag.ino](examples/WriteTag/WriteTag.ino)
 
 ```
 #include <SPI.h>
@@ -47,12 +48,39 @@ void loop()
 
   NdefMessage message = NdefMessage();
   String url = String("https://github.com/aroller/NDEF-MFRC522");
-  url.concat(uid());
   message.addUriRecord(url);
   MifareUltralight writer = MifareUltralight(mfrc522);
   bool success = writer.write(message);
 }
 ```
+
+Now read the tag using similar main code as above, but with this read excerpt from [ReadTag example](examples/ReadTag/ReadTag.ino).
+
+```
+  MifareUltralight reader = MifareUltralight(mfrc522);
+  NfcTag tag = reader.read();
+  tag.print();
+```
+
+... expect something similar to...
+
+```
+NFC Tag - NFC Forum Type 2
+UID 04 0D 89 32 F1 4A 80
+
+NDEF Message 1 record, 44 bytes
+  NDEF Record
+    TNF 0x1 Well Known
+    Type Length 0x1 1
+    Payload Length 0x28 40
+    Type 55  U
+    Payload 00 68 74 74 70 73 3A 2F 2F 67 69 74 68 75 62 2E 63 6F 6D 2F 61 72 6F 6C 6C 65 72 2F 4E 44 45 46 2D 4D 46 52 43 35 32 32  .https://github.com/aroller/NDEF-MFRC522
+    Record is 44 bytes
+```
+
+* Type 55  U -> Indicates URL
+* Decode the payload from ASCII and it will spell out your URL
+* See the url written
 
 ### MifareUltralight
 
@@ -99,13 +127,15 @@ This code is based on the "NFC Data Exchange Format (NDEF) Technical Specificati
 
 ### Tests
 
-TBD
+- Unit tests from original repo work. Load them to arduino and look for success.
 
 ## Known Issues
 
 This software is in development. It works for the happy path. Error handling could use improvement. It runs out of memory, especially on the Uno board. Use small messages with the Uno. The Due board can write larger messages. Please submit patches.
 
 - Read and Write in the same session fails
+- Consider breaking NDEF files (NFC*.h/Ndef*.h) out from I/O files (MifareUltralight.h)
+- Not all examples are converted to MFRC522 yet.
 
 ## Book
 
