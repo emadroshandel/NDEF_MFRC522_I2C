@@ -7,7 +7,7 @@
 
 namespace ndef_mfrc522 {
 class MifareUltralight;
-} // namespace ndef_mfrc522
+} 
 
 class ndef_mfrc522::MifareUltralight {
 public:

@@ -6,7 +6,11 @@
 
 #define MAX_NDEF_RECORDS 4
 
-class NdefMessage {
+namespace ndef_mfrc522 {
+class NdefMessage;
+}
+
+class ndef_mfrc522::NdefMessage {
 public:
   NdefMessage(void);
   NdefMessage(const byte *data, const int numBytes);

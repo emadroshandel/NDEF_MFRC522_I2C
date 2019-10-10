@@ -2,5 +2,5 @@
     "output": "./build",
     "board": "arduino:avr:uno",
     "port": "/dev/cu.usbmodem141101",
-    "sketch": "tests/NfcTagTest/NfcTagTest.ino"
+    "sketch": "examples/WriteTag/WriteTag.ino"
 }

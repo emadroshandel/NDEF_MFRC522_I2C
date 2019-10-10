@@ -1,5 +1,6 @@
 #include "NdefRecord.h"
 
+namespace ndef_mfrc522 {
 NdefRecord::NdefRecord() {
   // Serial.println("NdefRecord Constructor 1");
   _tnf = 0;
@@ -305,4 +306,5 @@ void NdefRecord::print() {
   Serial.print(getEncodedSize());
   Serial.println(" bytes");
 }
+} // end namespace
 #endif

@@ -7,7 +7,7 @@
 
 namespace ndef_mfrc522 {
 class NfcTag;
-} // namespace ndef_mfrc522
+} 
 
 class ndef_mfrc522::NfcTag {
 public:

@@ -1,5 +1,6 @@
 #include "NdefMessage.h"
 
+namespace ndef_mfrc522 {
 NdefMessage::NdefMessage(void) { _recordCount = 0; }
 
 NdefMessage::NdefMessage(const byte *data, const int numBytes) {
@@ -232,5 +233,6 @@ void NdefMessage::print() {
   for (unsigned int i = 0; i < _recordCount; i++) {
     _records[i].print();
   }
+}
 }
 #endif
