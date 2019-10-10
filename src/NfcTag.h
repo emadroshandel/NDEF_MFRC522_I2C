@@ -5,7 +5,11 @@
 #include <Arduino.h>
 #include <inttypes.h>
 
-class NfcTag {
+namespace ndef_mfrc522 {
+class NfcTag;
+} // namespace ndef_mfrc522
+
+class ndef_mfrc522::NfcTag {
 public:
   NfcTag();
   NfcTag(byte *uid, unsigned int uidLength);

@@ -2,6 +2,8 @@
 #include <NfcTag.h>
 #include <Wire.h>
 
+using namespace ndef_mfrc522;
+
 void setup() { Serial.begin(115200); }
 
 // Test for pull requests #14 and #16
