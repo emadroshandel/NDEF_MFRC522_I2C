@@ -27,6 +27,9 @@ See [WriteTag.ino](examples/WriteTag/WriteTag.ino)
 
 #define SS_PIN 10
 #define RST_PIN 6
+
+using namespace ndef_mfrc522;
+
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 void setup()
@@ -78,9 +81,9 @@ NDEF Message 1 record, 44 bytes
     Record is 44 bytes
 ```
 
-* Type 55  U -> Indicates URL
-* Decode the payload from ASCII and it will spell out your URL
-* See the url written
+- Type 55 U -> Indicates URL
+- Decode the payload from ASCII and it will spell out your URL
+- See the url written
 
 ### MifareUltralight
 
@@ -128,6 +131,19 @@ This code is based on the "NFC Data Exchange Format (NDEF) Technical Specificati
 ### Tests
 
 - Unit tests from original repo work. Load them to arduino and look for success.
+
+## Releases
+
+See [Releases](releases) for the latest.
+
+Steps to release:
+
+1. Update library.properties with the correct semantic version
+   1. Update both in the version and the URL reference for explicit src reference
+1. Merge PR into master
+1. Create a Release named with the version in library.properties
+1. `particle library publish` to update particle
+   1. Arduino users rely on the github repo
 
 ## Known Issues
 

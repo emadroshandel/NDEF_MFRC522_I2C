@@ -5,7 +5,11 @@
 #include "NfcTag.h"
 #include <MFRC522.h>
 
-class MifareUltralight {
+namespace ndef_mfrc522 {
+class MifareUltralight;
+} 
+
+class ndef_mfrc522::MifareUltralight {
 public:
   MifareUltralight(MFRC522 &nfcShield);
   ~MifareUltralight();

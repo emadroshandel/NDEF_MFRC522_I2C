@@ -2,6 +2,8 @@
 #include <NdefRecord.h>
 #include <Wire.h>
 
+using namespace ndef_mfrc522;
+
 void assertBytesEqual(const uint8_t *expected, const uint8_t *actual,
                       uint8_t size) {
   for (int i = 0; i < size; i++) {

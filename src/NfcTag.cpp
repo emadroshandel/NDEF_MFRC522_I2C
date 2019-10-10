@@ -1,5 +1,7 @@
 #include "NfcTag.h"
 
+namespace ndef_mfrc522 {
+
 NfcTag::NfcTag() {
   _uid = 0;
   _uidLength = 0;
@@ -93,4 +95,5 @@ void NfcTag::print() {
     _ndefMessage->print();
   }
 }
+} // end namespace
 #endif

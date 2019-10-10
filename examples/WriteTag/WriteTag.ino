@@ -10,6 +10,10 @@
 
 #define SS_PIN 10
 #define RST_PIN 6
+
+using namespace ndef_mfrc522;
+
+
 MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
 
 void setup() {

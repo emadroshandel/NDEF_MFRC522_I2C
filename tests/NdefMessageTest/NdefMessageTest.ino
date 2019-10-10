@@ -3,6 +3,8 @@
 #include <NdefRecord.h>
 #include <Wire.h>
 
+using namespace ndef_mfrc522;
+
 // Custom Assertion
 void assertNoLeak(void (*callback)()) {
   int start = freeMemory();

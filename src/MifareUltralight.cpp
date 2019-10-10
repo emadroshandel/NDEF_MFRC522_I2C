@@ -30,6 +30,8 @@
  * bytes Page 41 16 bit one way counter Pages 42-43 Authentication configuration
  * 		Pages 44-47 Authentication key
  */
+
+namespace ndef_mfrc522 {
 MifareUltralight::MifareUltralight(MFRC522 &nfcShield) {
   nfc = &nfcShield;
   ndefStartIndex = 0;
@@ -284,3 +286,4 @@ boolean MifareUltralight::clean() {
   }
   return true;
 }
+} // namespace ndef_mfrc522

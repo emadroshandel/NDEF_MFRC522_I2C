@@ -1,4 +1,6 @@
 {
-  "output": "./build",
-  "board": "arduino:avr:uno"
+    "output": "./build",
+    "board": "arduino:avr:uno",
+    "port": "/dev/cu.usbmodem141101",
+    "sketch": "examples/WriteTag/WriteTag.ino"
 }

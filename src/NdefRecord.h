@@ -13,7 +13,11 @@
 #define TNF_UNCHANGED 0x06
 #define TNF_RESERVED 0x07
 
-class NdefRecord {
+namespace ndef_mfrc522 {
+class NdefRecord;
+} 
+
+class ndef_mfrc522::NdefRecord {
 public:
   NdefRecord();
   NdefRecord(const NdefRecord &rhs);
