@@ -4,13 +4,6 @@ namespace ndef_mfrc522 {
 NdefMessage::NdefMessage(void) { _recordCount = 0; }
 
 NdefMessage::NdefMessage(const byte *data, const int numBytes) {
-#ifdef NDEF_DEBUG
-  Serial.print(F("Decoding "));
-  Serial.print(numBytes);
-  Serial.println(F(" bytes"));
-  PrintHexChar(data, numBytes);
-// DumpHex(data, numBytes, 16);
-#endif
 
   _recordCount = 0;
 
@@ -234,5 +227,5 @@ void NdefMessage::print() {
     _records[i].print();
   }
 }
-}
 #endif
+} // namespace ndef_mfrc522

@@ -95,5 +95,5 @@ void NfcTag::print() {
     _ndefMessage->print();
   }
 }
-} // end namespace
 #endif
+} // namespace ndef_mfrc522

@@ -306,5 +306,5 @@ void NdefRecord::print() {
   Serial.print(getEncodedSize());
   Serial.println(" bytes");
 }
-} // end namespace
 #endif
+} // namespace ndef_mfrc522
