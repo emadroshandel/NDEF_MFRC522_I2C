@@ -10,10 +10,12 @@ Originally forked from NDEF library that exclusively worked with NFC Shield, but
 
 - Reading from Mifare Ultralight tags.
 - Writing to Mifare Ultralight tags.
+- Works on Arduino and Particle (Gen 3 xenon/argon/boron)
 
 ### Requires
 
 - [MFRC522 Arduino](https://github.com/miguelbalboa/rfid) or [MFRC522 Particle](https://github.com/pkourany/MFRC522_RFID_Library)
+
 
 ## Hello Github
 
@@ -132,6 +134,33 @@ This code is based on the "NFC Data Exchange Format (NDEF) Technical Specificati
 
 - Unit tests from original repo work. Load them to arduino and look for success.
 
+### Usage
+
+#### Arduino Usage
+
+The library is not yet published in the Library Manager so you must treat it as a private library.
+* Read [Arduino Libraries](https://www.arduino.cc/en/hacking/libraries) for how to use private library.
+
+#### Particle Usage
+
+The library is published and can easily install, but unfortunately there is a conflict between constants in `Arduino.h` and `spark_wiring_arduino_constants.h` which requires a little extra effort.
+
+```
+In file included from ./inc/Arduino.h:27:0,
+                 from .../lib/NDEF-MFRC522/src/Ndef.h:9,
+                 from .../lib/NDEF-MFRC522/src/MifareUltralight.h:4,
+                 from .../src/school-tag-station-particle.ino:6:
+../wiring/inc/spark_wiring_arduino_constants.h:152:18: error: conflicting declaration 'typedef uint32_t word'
+```
+
+* Open your project in Particle Workbench
+* Install `NDEF-MFRC522`
+* Open `spark_wiring_arduino_constants.h` in your particle library installed
+    * MacOS: `/Users/{you}/.particle/toolchains/deviceOS/{version}/firmware-{version}/wiring/inc/`
+* comment out `typedef uint32_t word;`
+* Should compile and install without an error.
+
+
 ## Releases
 
 See [Releases](releases) for the latest.
@@ -145,6 +174,7 @@ Steps to release:
 1. `particle library publish` to update particle
    1. Arduino users rely on the github repo
 
+
 ## Known Issues
 
 This software is in development. It works for the happy path. Error handling could use improvement. It runs out of memory, especially on the Uno board. Use small messages with the Uno. The Due board can write larger messages. Please submit patches.
@@ -152,6 +182,7 @@ This software is in development. It works for the happy path. Error handling cou
 - Read and Write in the same session fails
 - Consider breaking NDEF files (NFC*.h/Ndef*.h) out from I/O files (MifareUltralight.h)
 - Not all examples are converted to MFRC522 yet.
+- Conflict between Particle and Arduino constants `typedef uint32_t word;`
 
 ## Book
 

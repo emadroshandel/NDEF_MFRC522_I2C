@@ -29,6 +29,7 @@ void loop() {
 
   MifareUltralight reader = MifareUltralight(mfrc522);
   NfcTag tag = reader.read();
+  //Uncomment Ndef.h#NDEF_USE_SERIAL
   tag.print();
 
   delay(5000); // avoids duplicate scans
