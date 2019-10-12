@@ -102,8 +102,8 @@ NfcTag MifareUltralight::read() {
 boolean MifareUltralight::isUnformatted() {
   uint8_t page = 4;
   byte data[ultraLightReadSize];
-  boolean success = nfc->MIFARE_Read(page, data, &ultraLightReadSize);
-  if (success) {
+  int status = nfc->MIFARE_Read(page, data, &ultraLightReadSize);
+  if (status == MFRC522::StatusCode::STATUS_OK) {
     return (data[0] == 0xFF && data[1] == 0xFF && data[2] == 0xFF &&
             data[3] == 0xFF);
   } else {
