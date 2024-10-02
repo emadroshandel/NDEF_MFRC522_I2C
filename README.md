@@ -163,7 +163,7 @@ void readfromNTAG(){
 }
 ```
 
-... Write function is as f
+... Write function is as follows: 
 
 ```
 void WriteNDEF()
