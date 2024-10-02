@@ -24,12 +24,46 @@ Originally forked from NDEF library that exclusively worked with NFC Shield. The
 - Memory Size (6F): Indicates the total memory size of the tag in 8-byte blocks.
 - Access Conditions (00): Defines the read/write access conditions for the tag.
 
-Based on the explanations above, I have included a [code]()  in the example folder to adjust the CC sector of NFC tags, enabling read and write permissions while interfacing the tag with both Android and iPhone devices.
+Based on the explanations above, I have included a [code](https://github.com/emadroshandel/NDEF_MFRC522_I2C/tree/master/examples/I2C_MFRC522_CCadj) in the example folder to adjust the CC sector of NFC tags, enabling read and write permissions while interfacing the tag with both Android and iPhone devices.
 
-## Hello Github
+The written buffer in this example is as follows: 
+```
+///////////////////////////////////////////////////////////////////////////
+int buffersize = 4 ;
+byte CCbuf[4] {0xE1, 0x10, 0x6F, 0x00};
+byte size = sizeof(CCbuf);
+/*
+The CC E1 10 6F 00 is broken down as follows:
+E1: Magic Number
+10: Version Number
+6F: Memory Size (111 blocks of 8 bytes each, totaling 888 bytes)
+00: Access Conditions (read/write allowed)
+
+This configuration of the Sector 3 enables read and write cabability using the Android and iPhone devices.
+*/
+///////////////////////////////////////////////////////////////////////////
+```
+And it fills the third sector of the Tag using the "writetoNTAG(3,1,CCbuf);" function which includes the following: 
+```
+void writetoNTAG(uint8_t pagestart,int TotalPages,byte *bufinput){
+    for (int i=0; i < TotalPages; i++) {
+    //data is writen in blocks of 3 bytes (3 bytes per page)
+    status = (MFRC522::StatusCode) mfrc522.MIFARE_Ultralight_Write(pagestart+i, &bufinput[i*4], 4);
+    if (status != MFRC522::STATUS_OK) {
+      Serial2.print(F("MIFARE_Read() failed: "));
+      Serial2.println(mfrc522.GetStatusCodeName(status));
+      return;
+    }
+  }
+  Serial2.println(F("CC Sector have been set!"));
+  Serial2.println();
+}
+```
+
+## Main Example for Read/Write NDEF
 
 This will write this Github URL to your tag which will allow your NFC-Enabled phone to read the URL and open a browser to this page.
-See [WriteTag.ino](examples/WriteTag/WriteTag.ino)
+See [WriteNDEF.ino](https://github.com/emadroshandel/NDEF_MFRC522_I2C/tree/master/examples/I2C_MFRC522_ReadWriteNDEF)
 
 ```
 #include <Wire.h>
