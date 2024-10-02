@@ -119,7 +119,7 @@ boolean MifareUltralight::isUnformatted() {
 void MifareUltralight::readCapabilityContainer() {
   byte data[ultraLightReadSize];
   byte size = sizeof(data);
-  int success = nfc->MIFARE_Read(3, data, &size);
+  int success = nfc->MIFARE_Read(2, data, &size);
 #ifdef MIFARE_ULTRALIGHT_DEBUG
   PrintHex(data, ultraLightReadSize);
   Serial.print(F("Status of capabilities read: "));
@@ -129,7 +129,9 @@ void MifareUltralight::readCapabilityContainer() {
   if (success == MFRC522::StatusCode::STATUS_OK) {
     // See AN1303 - different rules for Mifare Family byte2 = (additional data +
     // 48)/8
-    tagCapacity = data[2] * 8;
+    tagCapacity = 63*4;//data[2] * 8; // For now, I have manually set the tag size
+    Serial.print(F("Tag capacity "));
+    Serial.print(tagCapacity);
 #ifdef MIFARE_ULTRALIGHT_DEBUG
     Serial.print(F("Tag capacity "));
     Serial.print(tagCapacity);
@@ -203,6 +205,7 @@ void MifareUltralight::calculateBufferSize() {
 }
 
 boolean MifareUltralight::write(NdefMessage &m) {
+  //Serial.print(F("writing now "));
   if (isUnformatted()) {
 #ifdef NDEF_USE_SERIAL
     Serial.println(F("WARNING: Tag is not formatted."));

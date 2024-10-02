@@ -4,7 +4,7 @@ Read and Write NDEF messages on Mifare Ultralight NFC Tags with Arduino connecte
 
 NFC Data Exchange Format (NDEF) is a common data format that operates across all NFC devices, regardless of the underlying tag or device technology.
 
-Originally forked from NDEF library that exclusively worked with NFC Shield, but adapted to work with the [MFRC522 Arduino](https://github.com/miguelbalboa/rfid) and [MFRC522 Particle](https://github.com/pkourany/MFRC522_RFID_Library) and limited to Mifare Ultralight NFC tags.
+Originally forked from NDEF library that exclusively worked with NFC Shield. The library has been later adjusted by Don Coleman and Aaron Roller to work with the [MFRC522 Arduino](https://github.com/miguelbalboa/rfid) and [MFRC522 Particle](https://github.com/pkourany/MFRC522_RFID_Library) and limited to Mifare Ultralight NFC tags. The previous versions have issues for communcation through I2C. This version have been updated to address the I2C communication issue with a proper example. Note that the [MFRC522_I2C_Lib](https://github.com/emadroshandel/MFRC522_I2C_Lib) is required for utilization of this library. 
 
 ### Supports
 
@@ -14,8 +14,17 @@ Originally forked from NDEF library that exclusively worked with NFC Shield, but
 
 ### Requires
 
-- [MFRC522 Arduino](https://github.com/miguelbalboa/rfid) or [MFRC522 Particle](https://github.com/pkourany/MFRC522_RFID_Library)
+- [MFRC522_I2C_Lib](https://github.com/emadroshandel/MFRC522_I2C_Lib).
 
+### Read/Write using Android and Iphone apps
+- Understanding the Capability Container (CC): The Capability Container (CC) is a critical component of an NFC tag, typically located in the fourth sector. It defines the memory layout and access conditions of the tag, ensuring that the tag can be read and written correctly by NFC-enabled devices.
+- Structure of the Capability Container: The CC is usually 4 bytes long and contains the following information:
+- Magic Number (E1): Indicates that the tag is NFC Forum Type 2 compliant.
+- Version Number (10): Specifies the version of the NFC Forum Type 2 Tag specification.
+- Memory Size (6F): Indicates the total memory size of the tag in 8-byte blocks.
+- Access Conditions (00): Defines the read/write access conditions for the tag.
+
+Based on the explanations above, I have included a code example in the example folder to adjust the CC sector of NFC tags, enabling read and write permissions while interfacing the tag with both Android and iPhone devices.
 
 ## Hello Github
 
@@ -23,64 +32,121 @@ This will write this Github URL to your tag which will allow your NFC-Enabled ph
 See [WriteTag.ino](examples/WriteTag/WriteTag.ino)
 
 ```
-#include <SPI.h>
-#include <MFRC522.h>
+#include <Wire.h>
+#include <MFRC522_I2C.h>
 #include "MifareUltralight.h"
 
-#define SS_PIN 10
-#define RST_PIN 6
+#define RST_PIN PA8 // Arduino Pin
+// 0x2D is i2c address on SDA. Check your address with i2cscanner if not match.
+MFRC522 mfrc522(0x2D, RST_PIN);   // Create MFRC522 instance.
 
 using namespace ndef_mfrc522;
 
-MFRC522 mfrc522(SS_PIN, RST_PIN); // Create MFRC522 instance
-
 void setup()
 {
-  Serial.begin(9600); // Initialize serial communications with the PC
-  SPI.begin();        // Init SPI bus
+  Serial2.begin(115200);
+  Wire.setSDA(PB9);
+  Wire.setSCL(PB6);
+  Wire.begin();                   // Initialize I2C
   mfrc522.PCD_Init(); // Init MFRC522 card
 }
 
 void loop()
 {
   // Look for new cards
-  if (!mfrc522.PICC_IsNewCardPresent())
+  if ( ! mfrc522.PICC_IsNewCardPresent())
     return;
 
   // Select one of the cards
-  if (!mfrc522.PICC_ReadCardSerial())
+  if ( ! mfrc522.PICC_ReadCardSerial())
     return;
 
-  NdefMessage message = NdefMessage();
-  String url = String("https://github.com/aroller/NDEF-MFRC522");
-  message.addUriRecord(url);
-  MifareUltralight writer = MifareUltralight(mfrc522);
-  bool success = writer.write(message);
+  Serial.println();
+ 
+  // Clean all pages
+   clean64Buf();
+  // Write data ***********************************************
+   WriteNDEF();
+  // Read data ***************************************************
+   readfromNTAG();
+  Serial2.println();
+	// Dump debug info about the card; PICC_HaltA() is automatically called
+	//mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
+  mfrc522.PICC_HaltA();
 }
 ```
 
-Now read the tag using similar main code as above, but with this read excerpt from [ReadTag example](examples/ReadTag/ReadTag.ino).
+Read function is as follows:
 
 ```
+void readfromNTAG(){
   MifareUltralight reader = MifareUltralight(mfrc522);
   NfcTag tag = reader.read();
-  tag.print();
+  if (tag.hasNdefMessage()) // every tag won't have a message
+  {
+      NdefMessage mess = tag.getNdefMessage();
+      Serial2.print("\nThis NFC Tag contains an NDEF Message with ");
+      Serial2.print(mess.getRecordCount());
+      Serial2.print(" NDEF Record");
+      if (mess.getRecordCount() != 1) {
+        Serial.print("s");
+      }
+      Serial.println(".");
+
+            // cycle through the records, printing some info from each
+      int recordCount = mess.getRecordCount();
+      for (int i = 0; i < recordCount; i++)
+      {
+        Serial.print("\nNDEF Record ");Serial.println(i+1);
+        NdefRecord record = mess.getRecord(i);
+        // NdefRecord record = message[i]; // alternate syntax
+
+        Serial.print("  TNF: ");Serial.println(record.getTnf());
+        Serial.print("  Type: ");Serial.println(record.getType()); // will be "" for TNF_EMPTY
+
+        // The TNF and Type should be used to determine how your application processes the payload
+        // There's no generic processing for the payload, it's returned as a byte[]
+        int payloadLength = record.getPayloadLength();
+        byte payload[payloadLength];
+        record.getPayload(payload);
+
+        // Force the data into a String (might work depending on the content)
+        // Real code should use smarter processing
+        String payloadAsString = "";
+        for (int c = 0; c < payloadLength; c++) {
+          payloadAsString += (char)payload[c];
+        }
+        Serial.print("  Payload (as String): ");
+        Serial.println(payloadAsString);
+
+        // id is probably blank and will return ""
+        String uid = record.getId();
+        if (uid != "") {
+          Serial.print("  ID: ");Serial.println(uid);
+        }
+      }
+  }
+}
 ```
 
-... expect something similar to...
+... Write function is as f
 
 ```
-NFC Tag - NFC Forum Type 2
-UID 04 0D 89 32 F1 4A 80
-
-NDEF Message 1 record, 44 bytes
-  NDEF Record
-    TNF 0x1 Well Known
-    Type Length 0x1 1
-    Payload Length 0x28 40
-    Type 55  U
-    Payload 00 68 74 74 70 73 3A 2F 2F 67 69 74 68 75 62 2E 63 6F 6D 2F 61 72 6F 6C 6C 65 72 2F 4E 44 45 46 2D 4D 46 52 43 35 32 32  .https://github.com/aroller/NDEF-MFRC522
-    Record is 44 bytes
+void WriteNDEF()
+{
+NdefMessage message = NdefMessage();
+        message.addTextRecord("Hello World!");
+        message.addUriRecord("http://www.practiceNDEF.test");
+        message.addTextRecord("The Second Text");
+        message.addUriRecord("http://www.SecondWeb.i2c");
+        MifareUltralight writer = MifareUltralight(mfrc522);
+        bool success = writer.write(message);
+        if (success) {
+            Serial.println("Success. Try reading this tag with your phone.");
+        } else {
+            Serial.println("Write failed");
+        }
+}
 ```
 
 - Type 55 U -> Indicates URL
@@ -133,6 +199,9 @@ This code is based on the "NFC Data Exchange Format (NDEF) Technical Specificati
 ### Tests
 
 - Unit tests from original repo work. Load them to arduino and look for success.
+- The example and library have been successfully tested and validated on both the Arduino UNO and STM32F407G. Please note that the available example and defined pin numbers are based on the tested STM32F. You may need to adjust the pins for a different processor.
+- It has been succesfully read from and write on ST25DV02K-W1R8S3 and NT3H1101 tags.
+- The interfacing of the programmed tag with the Android and iPhone apps developed using Microsoft Power Apps has been validated.
 
 ### Usage
 
@@ -154,35 +223,11 @@ In file included from ./inc/Arduino.h:27:0,
 ```
 
 * Open your project in Particle Workbench
-* Install `NDEF-MFRC522`
+* Install `NDEF_MFRC522_I2C`
 * Open `spark_wiring_arduino_constants.h` in your particle library installed
     * MacOS: `/Users/{you}/.particle/toolchains/deviceOS/{version}/firmware-{version}/wiring/inc/`
 * comment out `typedef uint32_t word;`
 * Should compile and install without an error.
-
-
-## Releases
-
-See [Releases](releases) for the latest.
-
-Steps to release:
-
-1. Update library.properties with the correct semantic version
-   1. Update both in the version and the URL reference for explicit src reference
-1. Merge PR into master
-1. Create a Release named with the version in library.properties
-1. `particle library publish` to update particle
-   1. Arduino users rely on the github repo
-
-
-## Known Issues
-
-This software is in development. It works for the happy path. Error handling could use improvement. It runs out of memory, especially on the Uno board. Use small messages with the Uno. The Due board can write larger messages. Please submit patches.
-
-- Read and Write in the same session fails
-- Consider breaking NDEF files (NFC*.h/Ndef*.h) out from I/O files (MifareUltralight.h)
-- Not all examples are converted to MFRC522 yet.
-- Conflict between Particle and Arduino constants `typedef uint32_t word;`
 
 ## Book
 

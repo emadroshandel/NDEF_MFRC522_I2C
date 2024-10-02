@@ -1,55 +1,38 @@
-#if 0
-#include <SPI.h>
-#include <PN532_SPI.h>
-#include <PN532.h>
-#include <NfcAdapter.h>
-
-PN532_SPI pn532spi(SPI, 10);
-NfcAdapter nfc = NfcAdapter(pn532spi);
-#else
-
-#include <Wire.h>
-#include <PN532_I2C.h>
-#include <PN532.h>
-#include <NfcAdapter.h>
-
-PN532_I2C pn532_i2c(Wire);
-NfcAdapter nfc = NfcAdapter(pn532_i2c);
-#endif
-
-void setup(void) {
-  Serial.begin(9600);
-  Serial.println("NDEF Reader");
-  nfc.begin();
+void clean64Buf(){
+    // Write data ***********************************************
+  for (int i=0; i < TotalPageReqClean; i++) {
+    //data is writen in blocks of 4 bytes (4 bytes per page)
+    status = (MFRC522::StatusCode) mfrc522.MIFARE_Ultralight_Write(3+i, &bufClean[i*4], 4);
+    if (status != MFRC522::STATUS_OK) {
+      Serial2.print(F("MIFARE_Read() failed: "));
+      Serial2.println(mfrc522.GetStatusCodeName(status));
+      return;
+    }
+  }
+  Serial2.println(F("MIFARE Ultralight: Cleaned"));
+  Serial2.println();
 }
 
-void loop(void) {
-  Serial.println("\nScan a NFC tag\n");
-
-  if (nfc.tagPresent())
+void readfromNTAG(){
+  MifareUltralight reader = MifareUltralight(mfrc522);
+  NfcTag tag = reader.read();
+  if (tag.hasNdefMessage()) // every tag won't have a message
   {
-    NfcTag tag = nfc.read();
-    Serial.println(tag.getTagType());
-    Serial.print("UID: ");Serial.println(tag.getUidString());
-
-    if (tag.hasNdefMessage()) // every tag won't have a message
-    {
-
-      NdefMessage message = tag.getNdefMessage();
-      Serial.print("\nThis NFC Tag contains an NDEF Message with ");
-      Serial.print(message.getRecordCount());
-      Serial.print(" NDEF Record");
-      if (message.getRecordCount() != 1) {
+      NdefMessage mess = tag.getNdefMessage();
+      Serial2.print("\nThis NFC Tag contains an NDEF Message with ");
+      Serial2.print(mess.getRecordCount());
+      Serial2.print(" NDEF Record");
+      if (mess.getRecordCount() != 1) {
         Serial.print("s");
       }
       Serial.println(".");
 
-      // cycle through the records, printing some info from each
-      int recordCount = message.getRecordCount();
+            // cycle through the records, printing some info from each
+      int recordCount = mess.getRecordCount();
       for (int i = 0; i < recordCount; i++)
       {
         Serial.print("\nNDEF Record ");Serial.println(i+1);
-        NdefRecord record = message.getRecord(i);
+        NdefRecord record = mess.getRecord(i);
         // NdefRecord record = message[i]; // alternate syntax
 
         Serial.print("  TNF: ");Serial.println(record.getTnf());
@@ -60,10 +43,6 @@ void loop(void) {
         int payloadLength = record.getPayloadLength();
         byte payload[payloadLength];
         record.getPayload(payload);
-
-        // Print the Hex and Printable Characters
-        Serial.print("  Payload (HEX): ");
-        PrintHexChar(payload, payloadLength);
 
         // Force the data into a String (might work depending on the content)
         // Real code should use smarter processing
@@ -80,7 +59,5 @@ void loop(void) {
           Serial.print("  ID: ");Serial.println(uid);
         }
       }
-    }
   }
-  delay(3000);
 }

@@ -3,7 +3,7 @@
 
 #include "Ndef.h"
 #include "NfcTag.h"
-#include <MFRC522.h>
+#include <MFRC522_I2C.h>
 
 namespace ndef_mfrc522 {
 class MifareUltralight;
