@@ -1,14 +1,11 @@
 #include <Wire.h>
 #include "MFRC522_I2C.h"
-#include "MifareUltralight.h"
 
 #define RST_PIN PA8 // Arduino UNO Pin
 // #define RST_PIN 14 // D5 Pin on NodeMCU
 #include <SoftwareSerial.h>
 #define     RXpin      PB11                     // MOD
 #define     TXpin      PD8                     // MOD
-
-using namespace ndef_mfrc522;
 
 #define PIN_SERIAL_RX         PA3
 #define PIN_SERIAL_TX         PA2
@@ -19,13 +16,24 @@ HardwareSerial Serial3(PB11,PD8);  // PB10 as TX, PB11 as RX for USART3
 MFRC522 mfrc522(0x2D, RST_PIN);   // Create MFRC522 instance.
 MFRC522::MIFARE_Key key;          //create a MIFARE_Key struct named 'key', which will hold the card information
 MFRC522::StatusCode status; //variable to get card status
-
-//NfcAdapter nfc = NfcAdapter(&mfrc522);
 ////////////////////////////////////////////////////////////////////////////
-int bufCleansize = 66 ;
-byte bufClean[64]= {0};  //data transfer buffer (16+2 bytes data+CRC)
+int bufCleansize = 254 ;
+byte bufClean[256]= {0};  //data transfer buffer (16+2 bytes data+CRC)
 int TotalPageReqClean = bufCleansize/4   ;
-////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+int buffersize = 4 ;
+byte CCbuf[4] {0xE1, 0x10, 0x6F, 0x00};
+byte size = sizeof(CCbuf);
+/*
+The CC E1 10 6F 00 is broken down as follows:
+E1: Magic Number
+10: Version Number
+6F: Memory Size (111 blocks of 8 bytes each, totaling 888 bytes)
+00: Access Conditions (read/write allowed)
+
+This configuration of the Sector 3 enables read and write cabability using the Android and iPhone devices.
+*/
+///////////////////////////////////////////////////////////////////////////
 void setup() {
     // reassign pin numbers for Serial1
   Serial2.setTx(PIN_SERIAL_TX);
@@ -45,7 +53,6 @@ void setup() {
     for (byte i = 0; i < 6; i++) {
         key.keyByte[i] = 0xFF;
     }
-
     Serial2.println(F("BEWARE: Data will be written to the PICC, in sector #1"));
 }
 
@@ -58,15 +65,11 @@ void loop() {
   if ( ! mfrc522.PICC_ReadCardSerial())
     return;
 
-  Serial.println();
- 
   // Clean all pages
-   clean64Buf();
+   clean256Buf();
   // Write data ***********************************************
-   WriteNDEF();
-  // Read data ***************************************************
-   readfromNTAG();
-  Serial2.println();
+   writetoNTAG(3,1,CCbuf);
+
 	// Dump debug info about the card; PICC_HaltA() is automatically called
 	mfrc522.PICC_DumpToSerial(&(mfrc522.uid));
   mfrc522.PICC_HaltA();

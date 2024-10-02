@@ -130,8 +130,8 @@ void MifareUltralight::readCapabilityContainer() {
     // See AN1303 - different rules for Mifare Family byte2 = (additional data +
     // 48)/8
     tagCapacity = 63*4;//data[2] * 8; // For now, I have manually set the tag size
-    Serial.print(F("Tag capacity "));
-    Serial.print(tagCapacity);
+    //Serial.print(F("Tag capacity "));
+    //Serial.print(tagCapacity);
 #ifdef MIFARE_ULTRALIGHT_DEBUG
     Serial.print(F("Tag capacity "));
     Serial.print(tagCapacity);

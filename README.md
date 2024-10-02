@@ -24,7 +24,7 @@ Originally forked from NDEF library that exclusively worked with NFC Shield. The
 - Memory Size (6F): Indicates the total memory size of the tag in 8-byte blocks.
 - Access Conditions (00): Defines the read/write access conditions for the tag.
 
-Based on the explanations above, I have included a code example in the example folder to adjust the CC sector of NFC tags, enabling read and write permissions while interfacing the tag with both Android and iPhone devices.
+Based on the explanations above, I have included a [code]()  in the example folder to adjust the CC sector of NFC tags, enabling read and write permissions while interfacing the tag with both Android and iPhone devices.
 
 ## Hello Github
 
