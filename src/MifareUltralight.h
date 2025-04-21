@@ -3,7 +3,8 @@
 
 #include "Ndef.h"
 #include "NfcTag.h"
-#include <MFRC522_I2C.h>
+#include <MFRC522_I2C.h>      // should be activated when using i2c library
+//#include <MFRC522.h>        // should be activated when using spi library
 
 namespace ndef_mfrc522 {
 class MifareUltralight;
